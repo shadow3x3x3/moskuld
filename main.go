@@ -21,10 +21,15 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	doc.Find(".DivSeat").Each(func(i int, s *goquery.Selection) {
-		labelTitle, found := s.Find(".label").Attr("title")
+	doc.Find("div.DivSeat").Each(func(i int, s *goquery.Selection) {
+		notBookedSeat, found := s.Find(".label-info").Attr("title")
 		if found {
-			fmt.Println(labelTitle)
+			fmt.Println("Can book seat:", notBookedSeat)
+		}
+
+		beBookedSeat, found := s.Find(".label-danger").Attr("title")
+		if found {
+			fmt.Println("Can't book seat:", beBookedSeat)
 		}
 	})
 
