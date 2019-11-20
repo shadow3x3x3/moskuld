@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	queryCinemaURL = "https://www.vscinemas.com.tw/api/GetLstDicCinema"
-	queryMoviesURL = "https://www.vscinemas.com.tw/api/GetLstDicMovie"
-	queryTimeURL   = "https://www.vscinemas.com.tw/api/GetLstDicDate"
+	queryCinemaURL = "https://www.vscinemas.com.tw/vsweb/api/GetLstDicCinema"
+	queryMoviesURL = "https://www.vscinemas.com.tw/vsweb/api/GetLstDicMovie"
+	queryTimeURL   = "https://www.vscinemas.com.tw/vsweb/api/GetLstDicDate"
 	querySeatURL   = "https://sales.vscinemas.com.tw/VoucherTicketing/SessionSeats.aspx"
 )
 
