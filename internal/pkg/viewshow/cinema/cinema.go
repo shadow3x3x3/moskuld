@@ -2,8 +2,8 @@ package cinema
 
 import (
 	"encoding/json"
-	"moskuld/internal/pkg/movie"
 	"moskuld/internal/pkg/util"
+	"moskuld/internal/pkg/viewshow/movie"
 )
 
 // Cinema represents the cinema information
