@@ -1,4 +1,4 @@
-package movie
+package viewshow
 
 import (
 	"encoding/json"
@@ -26,7 +26,7 @@ type Movie struct {
 }
 
 // GetAll returns a list of all movies by cinemaID
-func GetAll(cinemaID string) ([]*Movie, error) {
+func getAllMovie(cinemaID string) ([]*Movie, error) {
 	url := fmt.Sprintf("%s?cinema=%s", getMoviesURL, cinemaID)
 
 	rawString, err := util.GetBody(url)
