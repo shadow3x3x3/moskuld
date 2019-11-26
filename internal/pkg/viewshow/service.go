@@ -3,6 +3,7 @@ package viewshow
 import (
 	"errors"
 	"log"
+	"sync"
 )
 
 // Service represents a viewshow service
@@ -92,15 +93,21 @@ func (s *service) GetMovies() ([]*Movie, error) {
 		return nil, errors.New("No Selected Cinema")
 	}
 
+	var wg sync.WaitGroup
 	for _, c := range s.cinemas {
-		cMovies, err := getAllMovie(c.ID)
-		if err != nil {
-			log.Println("Can not get movie at", c.Name)
-			continue
-		}
+		wg.Add(1)
 
-		movies = append(movies, cMovies...)
+		go func(c *Cinema) {
+			defer wg.Done()
+			cMovies, err := getAllMovie(c.ID)
+			if err != nil {
+				log.Println("Can not get movie at", c.Name)
+			}
+			movies = append(movies, cMovies...)
+		}(c)
+
 	}
+	wg.Wait()
 
 	return movies, nil
 }

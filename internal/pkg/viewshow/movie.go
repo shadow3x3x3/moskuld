@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"moskuld/internal/pkg/util"
+	"sync"
 )
 
 const (
@@ -47,20 +48,36 @@ func getAllMovie(cinemaID string) ([]*Movie, error) {
 		return nil, err
 	}
 
+	var wg sync.WaitGroup
 	for _, m := range movies {
-		dates, err := getMovieDate(cinemaID, m.ID)
-		if err != nil {
-			continue
-		}
-		m.Dates = dates
-		for _, d := range m.Dates {
-			sessions, err := getMovieSession(cinemaID, m.ID, d.TimeValue)
+		wg.Add(1)
+
+		go func(m *Movie) {
+			defer wg.Done()
+			dates, err := getMovieDate(cinemaID, m.ID)
 			if err != nil {
-				continue
 			}
-			d.Sessions = sessions
-		}
+
+			m.Dates = dates
+
+			var dateWg sync.WaitGroup
+			for _, d := range m.Dates {
+				dateWg.Add(1)
+
+				go func(cinemaID, movieID string, d *MovieDate) {
+					defer dateWg.Done()
+					sessions, err := getMovieSession(cinemaID, movieID, d.TimeValue)
+					if err != nil {
+					}
+					d.Sessions = sessions
+				}(cinemaID, m.ID, d)
+
+				dateWg.Wait()
+			}
+		}(m)
 	}
+
+	wg.Wait()
 	return movies, nil
 }
 
