@@ -5,18 +5,24 @@ import (
 	"fmt"
 	"log"
 	"moskuld/internal/pkg/util"
+	"net/http"
 	"sync"
+	"time"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 const (
 	getMoviesURL        = "https://www.vscinemas.com.tw/vsweb/api/GetLstDicMovie"
 	getMoviesTimeURL    = "https://www.vscinemas.com.tw/vsweb/api/GetLstDicDate"
 	getMoviesSessionURL = "https://www.vscinemas.com.tw/vsweb/api/GetLstDicSession"
+	getSessionSeatsURL  = "https://sales.vscinemas.com.tw/VoucherTicketing/SessionSeats.aspx"
 )
 
 // MovieSession represents the providing session of the movie
 type MovieSession struct {
-	Text string `json:"strText"`
+	Value string `json:"strValue"`
+	Text  string `json:"strText"`
 }
 
 // MovieDate represents the providing date of the movie
@@ -114,4 +120,52 @@ func getMovieSession(cinemaID, movieID, timeValue string) ([]*MovieSession, erro
 
 	return movieSessions, nil
 
+}
+
+func getSeats(sessionValue string) error {
+	url := fmt.Sprintf("%s?%s", getSessionSeatsURL, sessionValue)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+
+	}
+	req.Host = `sales.vscinemas.com.tw`
+	req.Header.Set("Referer", `https://www.vscinemas.com.tw/vsweb/`)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	type seats struct {
+		nonBook []string
+		booked  []string
+	}
+
+	ss := &seats{}
+
+	start := time.Now()
+	doc.Find("div.DivSeat").Each(func(i int, s *goquery.Selection) {
+		notBookedSeat, found := s.Find(".label-info").Attr("title")
+		if found {
+			ss.nonBook = append(ss.nonBook, notBookedSeat)
+		}
+
+		beBookedSeat, found := s.Find(".label-danger").Attr("title")
+		if found {
+			ss.booked = append(ss.booked, beBookedSeat)
+		}
+	})
+	log.Printf("Parse Seats took %s\n", time.Since(start))
+
+	log.Printf("%+v\n", ss)
+
+	return nil
 }

@@ -12,6 +12,8 @@ type Service interface {
 	AddMovie(movie *Movie) error
 	GetCinemas() ([]*Cinema, error)
 	GetMovies() ([]*Movie, error)
+
+	GetSeats(sessionValue string)
 }
 
 type service struct {
@@ -110,6 +112,10 @@ func (s *service) GetMovies() ([]*Movie, error) {
 	wg.Wait()
 
 	return movies, nil
+}
+
+func (s *service) GetSeats(sessionValue string) {
+	getSeats(sessionValue)
 }
 
 func retriveCinemas(cinemas []*Cinema, movies []*Movie) ([]*Cinema, error) {
