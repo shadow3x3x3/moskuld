@@ -13,7 +13,7 @@ type Service interface {
 	GetCinemas() ([]*Cinema, error)
 	GetMovies() ([]*Movie, error)
 
-	GetSeats(sessionValue string)
+	GetSeats(sessionValue string) (*Seat, error)
 }
 
 type service struct {
@@ -114,8 +114,8 @@ func (s *service) GetMovies() ([]*Movie, error) {
 	return movies, nil
 }
 
-func (s *service) GetSeats(sessionValue string) {
-	getSeats(sessionValue)
+func (s *service) GetSeats(sessionValue string) (*Seat, error) {
+	return getSeats(sessionValue)
 }
 
 func retriveCinemas(cinemas []*Cinema, movies []*Movie) ([]*Cinema, error) {

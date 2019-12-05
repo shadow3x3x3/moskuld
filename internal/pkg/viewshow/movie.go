@@ -39,6 +39,12 @@ type Movie struct {
 	Dates []*MovieDate `json:",omitempty"`
 }
 
+// Seat represents the seat information of movie
+type Seat struct {
+	Idle   []string
+	Booked []string
+}
+
 // GetAll returns a list of all movies by cinemaID
 func getAllMovie(cinemaID string) ([]*Movie, error) {
 	url := fmt.Sprintf("%s?cinema=%s", getMoviesURL, cinemaID)
@@ -122,7 +128,7 @@ func getMovieSession(cinemaID, movieID, timeValue string) ([]*MovieSession, erro
 
 }
 
-func getSeats(sessionValue string) error {
+func getSeats(sessionValue string) (*Seat, error) {
 	url := fmt.Sprintf("%s?%s", getSessionSeatsURL, sessionValue)
 
 	req, err := http.NewRequest("GET", url, nil)
@@ -135,37 +141,30 @@ func getSeats(sessionValue string) error {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	type seats struct {
-		nonBook []string
-		booked  []string
-	}
-
-	ss := &seats{}
+	ss := &Seat{}
 
 	start := time.Now()
-	doc.Find("div.DivSeat").Each(func(i int, s *goquery.Selection) {
+	doc.Find("div.DivSeat").Each(func(_ int, s *goquery.Selection) {
 		notBookedSeat, found := s.Find(".label-info").Attr("title")
 		if found {
-			ss.nonBook = append(ss.nonBook, notBookedSeat)
+			ss.Idle = append(ss.Idle, notBookedSeat)
 		}
 
 		beBookedSeat, found := s.Find(".label-danger").Attr("title")
 		if found {
-			ss.booked = append(ss.booked, beBookedSeat)
+			ss.Booked = append(ss.Booked, beBookedSeat)
 		}
 	})
 	log.Printf("Parse Seats took %s\n", time.Since(start))
 
-	log.Printf("%+v\n", ss)
-
-	return nil
+	return ss, nil
 }
