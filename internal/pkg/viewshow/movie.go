@@ -68,6 +68,7 @@ func getAllMovie(cinemaID string) ([]*Movie, error) {
 			defer wg.Done()
 			dates, err := getMovieDate(cinemaID, m.ID)
 			if err != nil {
+				return
 			}
 
 			m.Dates = dates
