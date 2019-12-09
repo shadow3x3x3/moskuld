@@ -1,134 +1,66 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
 	"log"
+	"moskuld/internal/pkg/viewshow"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
-const (
-	queryCinemaURL = "https://www.vscinemas.com.tw/vsweb/api/GetLstDicCinema"
-	queryMoviesURL = "https://www.vscinemas.com.tw/vsweb/api/GetLstDicMovie"
-	queryTimeURL   = "https://www.vscinemas.com.tw/vsweb/api/GetLstDicDate"
-	querySeatURL   = "https://sales.vscinemas.com.tw/VoucherTicketing/SessionSeats.aspx"
-)
-
-// Cinema represents the cinema information
-type Cinema struct {
-	Name string `json:"strText"`
-	ID   string `json:"strValue"`
+func registerRouter(router *gin.Engine) {
+	router.GET("/cinemas", getCinemas)
+	router.GET("/cinema/:cinemaID")
+	router.GET("/cinema/:cinemaID/movies")
+	router.GET("/cinema/:cinemaID/movies/:movieID")
 }
 
-// Movie represents the cinema information
-type Movie struct {
-	Name string `json:"strText"`
-	ID   string `json:"strValue"`
+func makeErrorResponse(c *gin.Context, code int, message string) {
+	if code <= 200 {
+		log.Println("Status <= 200 is not an error response")
+	}
+	c.JSON(code,
+		gin.H{
+			"status":  code,
+			"message": message,
+		})
 }
 
-// MovieTime represents the time of movie information
-type MovieTime struct {
-	Text      string `json:"strText"`
-	TimeValue string `json:"strValue"`
+type RespCinema struct {
+	Name string `json:"name"`
+	ID   string `json:"id"`
+}
+
+func getCinemas(c *gin.Context) {
+	vsService := viewshow.NewService()
+	cinemas, err := vsService.GetCinemas()
+	if err != nil {
+		makeErrorResponse(c, http.StatusInternalServerError, err.Error())
+
+		log.Println(err)
+		return
+	}
+
+	var respCinemas []*RespCinema
+	for _, c := range cinemas {
+		respCinemas = append(respCinemas, &RespCinema{
+			Name: c.Name,
+			ID:   c.ID,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  http.StatusOK,
+		"message": "Get Cinmeas Success",
+		"data":    respCinemas,
+	})
+
 }
 
 func main() {
-	// getAllCinemaArray()
-	getAllMovieArray("19|LKMP")
-	// file, err := os.OpenFile("test_data/test.html", os.O_RDONLY, 04444)
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
+	r := gin.Default()
 
-	// defer file.Close()
+	registerRouter(r)
 
-	// doc, err := goquery.NewDocumentFromReader(file)
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-
-	// doc.Find("div.DivSeat").Each(func(i int, s *goquery.Selection) {
-	// 	notBookedSeat, found := s.Find(".label-info").Attr("title")
-	// 	if found {
-	// 		fmt.Println("Can book seat:", notBookedSeat)
-	// 	}
-
-	// 	beBookedSeat, found := s.Find(".label-danger").Attr("title")
-	// 	if found {
-	// 		fmt.Println("Can't book seat:", beBookedSeat)
-	// 	}
-	// })
-
-}
-
-func getAllCinemaArray() []*Cinema {
-	rawString, err := httpGetBodyBytes(queryCinemaURL)
-	if err != nil {
-		log.Println(err)
-		return nil
-	}
-
-	allCinema := []*Cinema{}
-
-	if err := json.Unmarshal(rawString, &allCinema); err != nil {
-		log.Println(err)
-		return nil
-	}
-
-	return allCinema
-}
-
-func getAllMovieArray(cinemaID string) []*Movie {
-	targetURL := fmt.Sprintf("%s?cinema=%s", queryMoviesURL, cinemaID)
-	rawString, err := httpGetBodyBytes(targetURL)
-	if err != nil {
-		log.Println(err)
-		return nil
-	}
-
-	allMovie := []*Movie{}
-
-	if err := json.Unmarshal(rawString, &allMovie); err != nil {
-		log.Println(err)
-		return nil
-	}
-
-	return allMovie
-}
-
-func getTimeArray(cinemaID string, movieID string) []*MovieTime {
-	targetURL := fmt.Sprintf("%s?cinema=%s&movie=%s", queryTimeURL, cinemaID, movieID)
-	rawString, err := httpGetBodyBytes(targetURL)
-	if err != nil {
-		log.Println(err)
-		return nil
-	}
-
-	allMovieTime := []*MovieTime{}
-
-	if err := json.Unmarshal(rawString, &allMovieTime); err != nil {
-		log.Println(err)
-		return nil
-	}
-
-	return allMovieTime
-}
-
-func httpGetBodyBytes(URL string) ([]byte, error) {
-	resp, err := http.Get(URL)
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-
-	defer resp.Body.Close()
-
-	rawByte, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-
-	return rawByte, nil
+	r.Run()
 }
