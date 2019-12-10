@@ -6,7 +6,11 @@ import (
 	"moskuld/pkg/cinema"
 	"moskuld/pkg/movie"
 	"sync"
+
+	jsoniter "github.com/json-iterator/go"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 // Service represents a viewshow service
 type Service interface {

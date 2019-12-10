@@ -1,7 +1,6 @@
 package viewshow
 
 import (
-	"encoding/json"
 	"moskuld/internal/pkg/util"
 	"moskuld/pkg/cinema"
 )
