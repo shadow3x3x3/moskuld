@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"moskuld/internal/pkg/viewshow"
+	"moskuld/pkg/cinema"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -11,7 +12,7 @@ import (
 func registerRouter(router *gin.Engine) {
 	router.GET("/cinemas", getCinemas)
 	router.GET("/cinema/:cinemaID")
-	router.GET("/cinema/:cinemaID/movies")
+	router.GET("/cinema/:cinemaID/movies", getMovies)
 	router.GET("/cinema/:cinemaID/movies/:movieID")
 }
 
@@ -41,20 +42,39 @@ func getCinemas(c *gin.Context) {
 		return
 	}
 
-	var respCinemas []*RespCinema
-	for _, c := range cinemas {
-		respCinemas = append(respCinemas, &RespCinema{
-			Name: c.Name,
-			ID:   c.ID,
-		})
+	c.JSON(http.StatusOK, gin.H{
+		"status":  http.StatusOK,
+		"message": "Get Cinmeas Success",
+		"data":    cinemas,
+	})
+
+}
+
+func getMovies(c *gin.Context) {
+	cinemaID := c.Param("cinemaID")
+
+	vsService := viewshow.NewService()
+	err := vsService.AddCinema(&cinema.Cinema{ID: cinemaID})
+	if err != nil {
+		makeErrorResponse(c, http.StatusInternalServerError, err.Error())
+
+		log.Println(err)
+		return
+	}
+
+	movies, err := vsService.GetMovies()
+	if err != nil {
+		makeErrorResponse(c, http.StatusInternalServerError, err.Error())
+
+		log.Println(err)
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"status":  http.StatusOK,
-		"message": "Get Cinmeas Success",
-		"data":    respCinemas,
+		"message": "Get Movies Success",
+		"data":    movies,
 	})
-
 }
 
 func main() {
