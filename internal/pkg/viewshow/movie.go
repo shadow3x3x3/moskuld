@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"moskuld/internal/pkg/util"
+	"moskuld/pkg/movie"
 	"net/http"
 	"sync"
 	"time"
@@ -27,16 +28,14 @@ type MovieSession struct {
 
 // MovieDate represents the providing date of the movie
 type MovieDate struct {
-	Text      string          `json:"strText"`
-	TimeValue string          `json:"strValue"`
-	Sessions  []*MovieSession `json:",omitempty"`
+	Text      string `json:"strText"`
+	TimeValue string `json:"strValue"`
 }
 
 // Movie represents the movie information
 type Movie struct {
-	Name  string       `json:"strText"`
-	ID    string       `json:"strValue"`
-	Dates []*MovieDate `json:",omitempty"`
+	Name string `json:"strText"`
+	ID   string `json:"strValue"`
 }
 
 // Seat represents the seat information of movie
@@ -46,7 +45,7 @@ type Seat struct {
 }
 
 // GetAll returns a list of all movies by cinemaID
-func getAllMovie(cinemaID string) ([]*Movie, error) {
+func getAllMovie(cinemaID string) ([]*movie.Movie, error) {
 	url := fmt.Sprintf("%s?cinema=%s", getMoviesURL, cinemaID)
 
 	rawString, err := util.GetBody(url)
@@ -60,11 +59,19 @@ func getAllMovie(cinemaID string) ([]*Movie, error) {
 		return nil, err
 	}
 
-	var wg sync.WaitGroup
+	var respMovies []*movie.Movie
 	for _, m := range movies {
+		respMovies = append(respMovies, &movie.Movie{
+			Name: m.Name,
+			ID:   m.ID,
+		})
+	}
+
+	var wg sync.WaitGroup
+	for _, rm := range respMovies {
 		wg.Add(1)
 
-		go func(m *Movie) {
+		go func(m *movie.Movie) {
 			defer wg.Done()
 			dates, err := getMovieDate(cinemaID, m.ID)
 			if err != nil {
@@ -77,7 +84,7 @@ func getAllMovie(cinemaID string) ([]*Movie, error) {
 			for _, d := range m.Dates {
 				dateWg.Add(1)
 
-				go func(cinemaID, movieID string, d *MovieDate) {
+				go func(cinemaID, movieID string, d *movie.Date) {
 					defer dateWg.Done()
 					sessions, err := getMovieSession(cinemaID, movieID, d.TimeValue)
 					if err != nil {
@@ -87,14 +94,14 @@ func getAllMovie(cinemaID string) ([]*Movie, error) {
 
 				dateWg.Wait()
 			}
-		}(m)
+		}(rm)
 	}
 
 	wg.Wait()
-	return movies, nil
+	return respMovies, nil
 }
 
-func getMovieDate(cinemaID, movieID string) ([]*MovieDate, error) {
+func getMovieDate(cinemaID, movieID string) ([]*movie.Date, error) {
 	url := fmt.Sprintf("%s?cinema=%s&movie=%s", getMoviesTimeURL, cinemaID, movieID)
 
 	rawString, err := util.GetBody(url)
@@ -103,15 +110,22 @@ func getMovieDate(cinemaID, movieID string) ([]*MovieDate, error) {
 	}
 
 	movieDates := []*MovieDate{}
-
 	if err := json.Unmarshal(rawString, &movieDates); err != nil {
 		return nil, err
 	}
 
-	return movieDates, nil
+	respMovieDates := []*movie.Date{}
+	for _, md := range movieDates {
+		respMovieDates = append(respMovieDates, &movie.Date{
+			Text:      md.Text,
+			TimeValue: md.TimeValue,
+		})
+	}
+
+	return respMovieDates, nil
 }
 
-func getMovieSession(cinemaID, movieID, timeValue string) ([]*MovieSession, error) {
+func getMovieSession(cinemaID, movieID, timeValue string) ([]*movie.Session, error) {
 	url := fmt.Sprintf("%s?cinema=%s&movie=%s&date=%s", getMoviesSessionURL, cinemaID, movieID, timeValue)
 
 	rawString, err := util.GetBody(url)
@@ -120,12 +134,19 @@ func getMovieSession(cinemaID, movieID, timeValue string) ([]*MovieSession, erro
 	}
 
 	movieSessions := []*MovieSession{}
-
 	if err := json.Unmarshal(rawString, &movieSessions); err != nil {
 		return nil, err
 	}
 
-	return movieSessions, nil
+	respSessions := []*movie.Session{}
+	for _, s := range movieSessions {
+		respSessions = append(respSessions, &movie.Session{
+			Value: s.Value,
+			Text:  s.Text,
+		})
+	}
+
+	return respSessions, nil
 
 }
 

@@ -3,6 +3,7 @@ package viewshow
 import (
 	"encoding/json"
 	"moskuld/internal/pkg/util"
+	"moskuld/pkg/cinema"
 )
 
 // Cinema represents the cinema information
@@ -15,7 +16,7 @@ const (
 	getCinemasURL = "https://www.vscinemas.com.tw/vsweb/api/GetLstDicCinema"
 )
 
-func getAllCinema() ([]*Cinema, error) {
+func getAllCinema() ([]*cinema.Cinema, error) {
 	respBody, err := util.GetBody(getCinemasURL)
 	if err != nil {
 		return nil, err
@@ -26,5 +27,11 @@ func getAllCinema() ([]*Cinema, error) {
 		return nil, err
 	}
 
-	return cinemas, nil
+	respCinemas := []*cinema.Cinema{}
+	for _, c := range cinemas {
+		rc := cinema.Cinema(*c)
+		respCinemas = append(respCinemas, &rc)
+	}
+
+	return respCinemas, nil
 }
