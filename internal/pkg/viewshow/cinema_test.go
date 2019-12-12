@@ -1,7 +1,6 @@
 package viewshow
 
 import (
-	"reflect"
 	"testing"
 )
 
@@ -28,8 +27,9 @@ func Test_getAllCinema(t *testing.T) {
 				t.Errorf("getAllCinema() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
+
 			for _, c := range cinemas {
-				if reflect.DeepEqual(c, tt.want) {
+				if c.ID == tt.want.ID && c.Name == tt.want.Name {
 					return
 				}
 
