@@ -107,7 +107,7 @@ func (s *service) GetMovies() ([]*movie.Movie, error) {
 
 		go func(c *cinema.Cinema) {
 			defer wg.Done()
-			cMovies, err := getAllMovie(c.ID)
+			cMovies, err := getMovies(c.ID)
 			if err != nil {
 				log.Println("Can not get movie at", c.Name)
 			}
@@ -138,7 +138,7 @@ func retriveCinemas(cinemas []*cinema.Cinema, movies []*movie.Movie) ([]*cinema.
 }
 
 func hasMovie(cinemaID, movieID string) bool {
-	movies, err := getAllMovie(cinemaID)
+	movies, err := getMovies(cinemaID)
 	if err != nil {
 		return false
 	}

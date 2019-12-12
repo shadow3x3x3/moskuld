@@ -44,7 +44,7 @@ type Seat struct {
 }
 
 // GetAll returns a list of all movies by cinemaID
-func getAllMovie(cinemaID string) ([]*movie.Movie, error) {
+func getMovies(cinemaID string) ([]*movie.Movie, error) {
 	url := fmt.Sprintf("%s?cinema=%s", getMoviesURL, cinemaID)
 
 	rawString, err := util.GetBody(url)
