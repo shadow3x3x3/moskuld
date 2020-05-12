@@ -12,6 +12,8 @@ import (
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
+var cinemaTable = getCinemasTable()
+
 // Service represents a viewshow service
 type Service interface {
 	AddCinema(cinemas *cinema.Cinema) error
@@ -32,11 +34,7 @@ type service struct {
 
 // NewService returns a new viewshow service
 func NewService() Service {
-	c, err := getCinemasTable()
-	if err != nil {
-		return nil
-	}
-	return &service{cinemaTable: c}
+	return &service{cinemaTable: cinemaTable}
 }
 
 func (s *service) Clear() {

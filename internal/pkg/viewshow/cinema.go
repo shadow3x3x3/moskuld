@@ -2,6 +2,7 @@ package viewshow
 
 import (
 	"errors"
+	"log"
 	"moskuld/internal/pkg/util"
 	"moskuld/pkg/cinema"
 	"strconv"
@@ -46,15 +47,15 @@ func getAllCinema() ([]*cinema.Cinema, error) {
 	return respCinemas, nil
 }
 
-func getCinemasTable() (map[int]*cinema.Cinema, error) {
+func getCinemasTable() map[int]*cinema.Cinema {
 	respBody, err := util.GetBody(getCinemasURL)
 	if err != nil {
-		return nil, err
+		log.Fatalln(err)
 	}
 
 	cinemas := []*Cinema{}
 	if err := json.Unmarshal(respBody, &cinemas); err != nil {
-		return nil, err
+		log.Fatalln(err)
 	}
 
 	respCinemas := make(map[int]*cinema.Cinema, len(cinemas))
@@ -62,7 +63,7 @@ func getCinemasTable() (map[int]*cinema.Cinema, error) {
 		keyText := strings.Split(c.ID, "|")[0]
 		key, err := strconv.Atoi(keyText)
 		if err != nil {
-			return nil, errors.New("Fetching cinemas error.")
+			log.Fatalln(err)
 		}
 		respCinemas[key] = &cinema.Cinema{
 			Name: c.Name,
@@ -71,5 +72,5 @@ func getCinemasTable() (map[int]*cinema.Cinema, error) {
 		}
 	}
 
-	return respCinemas, nil
+	return respCinemas
 }
