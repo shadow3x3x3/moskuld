@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 	"moskuld/internal/pkg/viewshow"
-	"moskuld/pkg/cinema"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -54,13 +54,13 @@ func getMovies(c *gin.Context) {
 	cinemaID := c.Param("cinemaID")
 
 	vsService := viewshow.NewService()
-	err := vsService.AddCinema(&cinema.Cinema{ID: cinemaID})
-	if err != nil {
-		makeErrorResponse(c, http.StatusInternalServerError, err.Error())
 
-		log.Println(err)
+	ID, err := strconv.Atoi(cinemaID)
+	if err != nil {
+		makeErrorResponse(c, http.StatusBadRequest, "Invalid Cinema ID")
 		return
 	}
+	vsService.AddCinemaID(ID)
 
 	movies, err := vsService.GetMovies()
 	if err != nil {

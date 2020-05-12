@@ -15,6 +15,7 @@ var json = jsoniter.ConfigCompatibleWithStandardLibrary
 // Service represents a viewshow service
 type Service interface {
 	AddCinema(cinemas *cinema.Cinema) error
+	AddCinemaID(ID int) error
 	AddMovie(movie *movie.Movie) error
 	GetCinemas() ([]*cinema.Cinema, error)
 	GetMovies() ([]*movie.Movie, error)
@@ -23,13 +24,24 @@ type Service interface {
 }
 
 type service struct {
+	cinemaTable map[int]*cinema.Cinema
+
 	cinemas []*cinema.Cinema
 	movies  []*movie.Movie
 }
 
 // NewService returns a new viewshow service
 func NewService() Service {
-	return &service{}
+	c, err := getCinemasTable()
+	if err != nil {
+		return nil
+	}
+	return &service{cinemaTable: c}
+}
+
+func (s *service) Clear() {
+	s.cinemas = nil
+	s.movies = nil
 }
 
 // AddCinema adds a cinema to service
@@ -42,6 +54,19 @@ func (s *service) AddCinema(cinema *cinema.Cinema) error {
 	}
 
 	s.cinemas = append(s.cinemas, cinema)
+
+	return nil
+}
+
+func (s *service) AddCinemaID(ID int) error {
+	c, ok := s.cinemaTable[ID]
+	if !ok {
+		return errors.New("Not found cinema")
+	}
+
+	if err := s.AddCinema(c); err != nil {
+		return err
+	}
 
 	return nil
 }

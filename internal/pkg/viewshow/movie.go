@@ -52,7 +52,7 @@ func getMovies(cinemaID string) ([]*movie.Movie, error) {
 		return nil, err
 	}
 
-	movies := []*Movie{}
+	var movies []*Movie
 	if err := json.Unmarshal(rawString, &movies); err != nil {
 		log.Println(err)
 		return nil, err

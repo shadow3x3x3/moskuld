@@ -4,4 +4,5 @@ package cinema
 type Cinema struct {
 	Name string `json:"name"`
 	ID   string `json:"id"`
+	Key  int    `json:",omitempty"`
 }
