@@ -14,6 +14,8 @@ func registerRouter(router *gin.Engine) {
 	router.GET("/cinema/:cinemaID")
 	router.GET("/cinema/:cinemaID/movies", getMovies)
 	router.GET("/cinema/:cinemaID/movies/:movieID")
+
+	router.GET("/movies", getAllMovie)
 }
 
 func makeErrorResponse(c *gin.Context, code int, message string) {
@@ -63,6 +65,23 @@ func getMovies(c *gin.Context) {
 	vsService.AddCinemaID(ID)
 
 	movies, err := vsService.GetMovies()
+	if err != nil {
+		makeErrorResponse(c, http.StatusInternalServerError, err.Error())
+
+		log.Println(err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  http.StatusOK,
+		"message": "Get Movies Success",
+		"data":    movies,
+	})
+}
+
+func getAllMovie(c *gin.Context) {
+	vsService := viewshow.NewService()
+	movies, err := vsService.GetAllMovies()
 	if err != nil {
 		makeErrorResponse(c, http.StatusInternalServerError, err.Error())
 

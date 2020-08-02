@@ -1,0 +1,9 @@
+GET http://localhost:8080/cinemas
+
+###
+
+GET http://localhost:8080/cinema/12/movies
+
+###
+
+GET http://localhost:8080/movies

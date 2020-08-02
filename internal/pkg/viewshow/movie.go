@@ -1,11 +1,14 @@
 package viewshow
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"moskuld/internal/pkg/util"
 	"moskuld/pkg/movie"
 	"net/http"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -17,6 +20,8 @@ const (
 	getMoviesTimeURL    = "https://www.vscinemas.com.tw/vsweb/api/GetLstDicDate"
 	getMoviesSessionURL = "https://www.vscinemas.com.tw/vsweb/api/GetLstDicSession"
 	getSessionSeatsURL  = "https://sales.vscinemas.com.tw/VoucherTicketing/SessionSeats.aspx"
+
+	moviesURL = "https://www.vscinemas.com.tw/vsweb/film/index.aspx"
 )
 
 // MovieSession represents the providing session of the movie
@@ -41,6 +46,64 @@ type Movie struct {
 type Seat struct {
 	Idle   []string
 	Booked []string
+}
+
+func getAllMovies() ([]*movie.Movie, error) {
+
+	req, err := http.NewRequest("GET", moviesURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Host = `sales.vscinemas.com.tw`
+	req.Header.Set("Referer", `https://www.vscinemas.com.tw/vsweb/`)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	lastPageAttr := ""
+	doc.Find("a.icon-arrow-right").Each(func(_ int, s *goquery.Selection) {
+		if pageAttr, found := s.Attr("href"); found {
+			lastPageAttr = pageAttr
+		}
+	})
+	lastPage := strings.SplitAfter(lastPageAttr, "=")[1]
+	lastPageIndex, err := strconv.Atoi(lastPage)
+	if err != nil {
+		return nil, errors.New("Can not retrive the last index")
+	}
+
+	start := time.Now()
+	movies := []*movie.Movie{}
+	for i := 1; i <= lastPageIndex; i++ {
+		url := fmt.Sprintf("%s?p=%d", moviesURL, i)
+		res, err := http.Get(url)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer res.Body.Close()
+
+		doc, err := goquery.NewDocumentFromResponse(res)
+		if err != nil {
+			return nil, err
+		}
+		doc.Find("ul.movieList h2").Each(func(_ int, s *goquery.Selection) {
+			title := s.Text()
+			movies = append(movies, &movie.Movie{Name: title})
+		})
+
+	}
+	log.Printf("Parse Seats took %s\n", time.Since(start))
+
+	return movies, nil
 }
 
 // GetAll returns a list of all movies by cinemaID

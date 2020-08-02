@@ -21,6 +21,7 @@ type Service interface {
 	AddMovie(movie *movie.Movie) error
 	GetCinemas() ([]*cinema.Cinema, error)
 	GetMovies() ([]*movie.Movie, error)
+	GetAllMovies() ([]*movie.Movie, error)
 
 	GetSeats(sessionValue string) (*Seat, error)
 }
@@ -141,6 +142,10 @@ func (s *service) GetMovies() ([]*movie.Movie, error) {
 	wg.Wait()
 
 	return movies, nil
+}
+
+func (s *service) GetAllMovies() ([]*movie.Movie, error) {
+	return getAllMovies()
 }
 
 func (s *service) GetSeats(sessionValue string) (*Seat, error) {
